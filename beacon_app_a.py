@@ -6,10 +6,12 @@ Copyright (c) 2015 ContinuumBridge Limited
 
 # Default values:
 config = {
-    "beacons": [{"name": "No Name",
-                 "uuid": ""
-                }
-               ],
+          "beacons": [{"name": "No Name",
+                       "uuid": ""
+                      }
+                     ],
+          "touch_threshold": 15.0,
+          "near_far_threshold": -15.0
 }
 
 import sys
@@ -25,6 +27,7 @@ class App(CbApp):
         self.state = "stopped"
         self.devices = []
         self.idToName = {} 
+        self.knownBeacons = []
         # Super-class init must be called
         CbApp.__init__(self, argv)
 
@@ -55,9 +58,21 @@ class App(CbApp):
             if message["characteristic"] == "btle_beacon":
                 for b in config["beacons"]:
                     if message["data"]["uuid"] == b["uuid"]:
-                        self.cbLog("info", "Found " + b["name"] + ", rx power: " + str(message["data"]["rx_power"]))
-                        if int(message["data"]["rx_power"]) > int(message["data"]["reference_power"]) + 5:
-                            self.cbLog("info", b["name"] + " touched in")
+                        #self.cbLog("info", "Found " + b["name"] + ", rx power: " + str(message["data"]["rx_power"]))
+                        if int(message["data"]["rx_power"]) > int(message["data"]["reference_power"]) + config["touch_threshold"]:
+                            self.cbLog("info", b["name"] + " touched in (" + str(message["data"]["rx_power"]) + " dBm)")
+                        elif int(message["data"]["rx_power"]) > int(message["data"]["reference_power"]) + config["near_far_threshold"]:
+                            self.cbLog("info", b["name"] + " very near (" + str(message["data"]["rx_power"]) + " dBm)")
+                        else:
+                            self.cbLog("info", b["name"] + " in range (" + str(message["data"]["rx_power"]) + " dBm)")
+                found = False
+                for b in self.knownBeacons:
+                    if message["data"]["uuid"] == b:
+                        found = True
+                        break
+                if not found:
+                    self.knownBeacons.append(message["data"]["uuid"])
+                    self.cbLog("info", "New beacon (or other BTLE device, UUID: " + message["data"]["uuid"] + ", reference power: " + str(message["data"]["reference_power"]) )
         except Exception as ex:
             self.cbLog("warning", "onAdaptorData, problem with received message")
             self.cbLog("warning", "Exception: " + str(type(ex)) + str(ex.args))
