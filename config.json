@@ -1,0 +1,9 @@
+{
+    "exe": "beacon_app.py", 
+    "name": "Simple Beacon Handler", 
+    "url": "https://github.com/ContinuumBridge/simple_beacon_handler/archive/v0.0.1.tar.gz", 
+    "app_resource": "/api/bridge/v1/app/21", 
+    "version": "0.0.1", 
+    "provider": "ContinuumBridge", 
+    "description": "A simple handler for Bluetooth LE beacons"
+}
